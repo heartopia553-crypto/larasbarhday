@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Happy Birthday Lara ♡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffe3ec;--pink:#ff8fb1;--berry:#7a2e4d;--cream:#fff8f0;--mint:#bfe8d6;--butter:#ffe9a8}
+@font-face{font-family:"Minecraft";src:url("minecraft.woff2") format("woff2"),url("minecraft.ttf") format("truetype");font-display:swap}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--berry);font-family:"Pixelify Sans",ui-monospace,monospace;font-size:18px}
+body{background-image:radial-gradient(#ffc6d8 2px,transparent 2px);background-size:28px 28px}
+.screen{display:none;min-height:100vh;padding:24px 16px;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center}
+.screen.on{display:flex}
+h1{font-size:clamp(34px,9vw,64px);margin:0;font-weight:600;text-shadow:4px 4px 0 var(--pink);line-height:1.05}
+.mc{font-family:"Minecraft","Press Start 2P",monospace;font-weight:400;color:#fff;letter-spacing:.06em;text-shadow:.08em .08em 0 #3f3f3f;margin:0;line-height:1.1;font-size:clamp(44px,15vw,110px)}
+.sub{font-size:clamp(22px,6vw,34px);margin:0;font-weight:600}
+.box{background:var(--cream);border:4px solid var(--berry);box-shadow:6px 6px 0 var(--berry);padding:14px 18px;max-width:420px}
+.btn{font:inherit;font-size:20px;color:var(--berry);background:var(--butter);border:4px solid var(--berry);box-shadow:5px 5px 0 var(--berry);padding:10px 22px;cursor:pointer}
+.btn:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--berry)}
+.btn:focus-visible{outline:4px dashed var(--pink);outline-offset:4px}
+.blink{animation:blink 1.2s steps(2) infinite}@keyframes blink{50%{opacity:.35}}
+/* character */
+.char{width:var(--w);height:var(--h);background-repeat:no-repeat;background-size:auto 100%;image-rendering:pixelated;
+ animation:play calc(var(--n)/var(--fps)*1s) steps(var(--n)) infinite}
+@keyframes play{to{background-position-x:calc(var(--w)*var(--n)*-1)}}
+.char.fallback{animation:bob 1s steps(2) infinite;background:none;display:grid;place-items:center;}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.char.fallback img{width:100%;height:100%;object-fit:cover;border:4px solid var(--berry);box-shadow:5px 5px 0 var(--berry)}
+/* cake */
+#stage{position:relative;width:300px;height:300px}
+#cake{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+#cakeFallback{position:absolute;left:30px;right:30px;bottom:20px;height:130px;background:var(--cream);border:4px solid var(--berry);box-shadow:6px 6px 0 var(--berry)}
+#cakeFallback::before{content:"";position:absolute;left:-4px;right:-4px;top:-4px;height:44px;background:var(--pink);border:4px solid var(--berry)}
+.candle{position:absolute;width:12px;height:46px;margin-left:-6px;background:var(--mint);border:3px solid var(--berry)}
+.flame{position:absolute;left:50%;top:-26px;width:14px;height:22px;margin-left:-7px;background:var(--butter);border:3px solid var(--berry);border-radius:50% 50% 50% 50%/70% 70% 30% 30%;animation:flick .3s steps(2) infinite;transform-origin:bottom}
+@keyframes flick{50%{transform:scale(.9,1.1) rotate(4deg)}}
+.candle.off .flame{display:none}
+.candle.off::after{content:"";position:absolute;left:2px;top:-30px;width:6px;height:6px;background:#cfc;opacity:0;animation:smoke 1.4s ease-out}
+@keyframes smoke{0%{opacity:.9}100%{opacity:0;transform:translateY(-40px)}}
+.meter{width:240px;height:18px;border:4px solid var(--berry);background:var(--cream)}
+.meter i{display:block;height:100%;width:0;background:var(--pink)}
+/* memories */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:22px;max-width:760px;width:100%}
+.pol{background:var(--cream);border:4px solid var(--berry);box-shadow:5px 5px 0 var(--berry);padding:8px 8px 22px;transform:rotate(var(--r))}
+.pol img,.pol .ph{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--pink)}
+.confetti{position:fixed;top:-12px;width:10px;height:10px;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.blink,.flame,.char{animation:none}.confetti{display:none}}
+</style>
+</head>
+<body>
+
+<section id="start" class="screen on">
+  <div class="blink">♡ ☆ ♡</div>
+  <h1 class="mc" id="name"></h1>
+  <p class="sub">Happy Birthday!</p>
+  <div id="startChar"></div>
+  <button class="btn" id="startBtn">Press start</button>
+</section>
+
+<section id="game" class="screen">
+  <div class="box" id="say">Blow on your phone to put out the candles!</div>
+  <div id="stage"><div id="cakeFallback"></div><img id="cake" alt="" hidden></div>
+  <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+  <div id="gameChar"></div>
+  <button class="btn" id="tapBlow" hidden>Tap to blow</button>
+</section>
+
+<section id="memories" class="screen">
+  <h1>Happy Birthday!</h1>
+  <div class="box" id="msg"></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<script>
+/* ================= EDIT ME ================= */
+const CONFIG = {
+  name: "Lara",
+  message: "Wishing you the cutest, happiest year ever. I’m so glad you’re my friend ♡",
+  // Your chibi animation: a horizontal sprite sheet (all frames in ONE row).
+  // frames = number of frames, frameW/frameH = size of ONE frame in px (display size).
+  character: { src: "character.png", frames: 4, frameW: 128, frameH: 128, fps: 6 },
+  // Your decorated cake picture (transparent PNG, square works best).
+  cake: "cake.png",
+  // Where candles sit on the cake, in % of the 300x300 cake area. Add or remove as you like.
+  candles: [[28,38],[44,34],[60,34],[76,38]],
+  // Photos you save from Pinterest into the images/ folder.
+  photos: ["images/1.jpg","images/2.jpg","images/3.jpg","images/4.jpg","images/5.jpg","images/6.jpg"]
+};
+/* ============================================ */
+
+const $ = id => document.getElementById(id);
+const show = id => { document.querySelectorAll(".screen").forEach(s => s.classList.remove("on")); $(id).classList.add("on"); };
+document.title = `Happy Birthday ${CONFIG.name} ♡`;
+$("name").textContent = CONFIG.name.toUpperCase();
+$("msg").textContent = CONFIG.message;
+
+// character (falls back to a little emoji if the image is missing)
+function makeChar(target){
+  const c = CONFIG.character, el = document.createElement("div");
+  el.className = "char";
+  el.style.cssText = `--w:${c.frameW}px;--h:${c.frameH}px;--n:${c.frames};--fps:${c.fps}`;
+  const img = new Image();
+  img.onload = () => { el.style.backgroundImage = `url(${c.src})`; };
+  img.onerror = () => { el.className = "char fallback"; el.innerHTML = '<img src="cat.jpg" alt="">'; };
+  img.src = c.src;
+  $(target).appendChild(el);
+}
+makeChar("startChar"); makeChar("gameChar");
+
+// cake image (falls back to the drawn cake)
+const cakeImg = $("cake"), probe = new Image();
+probe.onload = () => { cakeImg.src = CONFIG.cake; cakeImg.hidden = false; $("cakeFallback").hidden = true; };
+probe.src = CONFIG.cake;
+
+// candles
+const candles = CONFIG.candles.map(([x,y]) => {
+  const c = document.createElement("div");
+  c.className = "candle";
+  c.style.left = x + "%"; c.style.top = y + "%";
+  c.innerHTML = '<div class="flame"></div>';
+  $("stage").appendChild(c);
+  return c;
+});
+
+// photos
+CONFIG.photos.forEach((src,i) => {
+  const d = document.createElement("div");
+  d.className = "pol"; d.style.setProperty("--r", ((i%3)-1)*2.5 + "deg");
+  const img = new Image(); img.alt = ""; img.src = src;
+  img.onerror = () => { const p = document.createElement("div"); p.className = "ph"; img.replaceWith(p); };
+  d.appendChild(img); $("grid").appendChild(d);
+});
+
+// blowing
+let out = 0, finished = false, stream, raf, heat = 0;
+function snuff(n){
+  while(out < n && out < candles.length) candles[out++].classList.add("off");
+  if(out >= candles.length && !finished) win();
+}
+function win(){
+  finished = true; cancelAnimationFrame(raf);
+  if(stream) stream.getTracks().forEach(t => t.stop());
+  $("say").textContent = "Make a wish… ✧";
+  $("tapBlow").hidden = true;
+  confetti();
+  setTimeout(() => { show("memories"); confetti(); }, 3200);
+}
+function confetti(){
+  const colors = ["#ff8fb1","#ffe9a8","#bfe8d6","#fff"];
+  for(let i=0;i<60;i++){
+    const p = document.createElement("i"); p.className = "confetti";
+    p.style.left = Math.random()*100 + "vw";
+    p.style.background = colors[i%4];
+    p.style.animationDuration = 2 + Math.random()*2.5 + "s";
+    p.style.animationDelay = Math.random()*.6 + "s";
+    document.body.appendChild(p); setTimeout(() => p.remove(), 5500);
+  }
+}
+async function listen(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const an = ctx.createAnalyser(); an.fftSize = 512;
+    ctx.createMediaStreamSource(stream).connect(an);
+    const buf = new Uint8Array(an.fftSize);
+    let base = 0, t0 = performance.now();
+    const loop = () => {
+      an.getByteTimeDomainData(buf);
+      let s = 0; for(const v of buf){ const d = (v-128)/128; s += d*d; }
+      const rms = Math.sqrt(s/buf.length);
+      if(performance.now() - t0 < 600) base = Math.max(base, rms);       // measure room noise
+      else{
+        const strong = rms > base + 0.08;                                  // a blow is loud, steady air noise
+        heat = strong ? Math.min(heat + 1, 90) : Math.max(heat - 2, 0);
+        $("meter").style.width = (heat/90*100) + "%";
+        snuff(Math.floor(heat/90 * candles.length * 1.0001));
+      }
+      if(!finished) raf = requestAnimationFrame(loop);
+    };
+    loop();
+  }catch(e){
+    $("say").textContent = "No mic? No problem — tap the button!";
+    $("tapBlow").hidden = false;
+  }
+}
+$("tapBlow").onclick = () => snuff(out + 1);
+$("startBtn").onclick = () => { show("game"); listen(); };
+</script>
+</body>
+</html>
