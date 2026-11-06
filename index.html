@@ -35,14 +35,16 @@ h1{font-size:clamp(34px,9vw,64px);margin:0;font-weight:600;text-shadow:4px 4px 0
 #cake{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
 #cakeFallback{position:absolute;left:30px;right:30px;bottom:20px;height:130px;background:var(--cream);border:4px solid var(--berry);box-shadow:6px 6px 0 var(--berry)}
 #cakeFallback::before{content:"";position:absolute;left:-4px;right:-4px;top:-4px;height:44px;background:var(--pink);border:4px solid var(--berry)}
-.candle{position:absolute;width:12px;height:46px;margin-left:-6px;background:var(--mint);border:3px solid var(--berry)}
-.flame{position:absolute;left:50%;top:-26px;width:14px;height:22px;margin-left:-7px;background:var(--butter);border:3px solid var(--berry);border-radius:50% 50% 50% 50%/70% 70% 30% 30%;animation:flick .3s steps(2) infinite;transform-origin:bottom}
+.candle{position:absolute;width:0;height:0}
+.flame{position:absolute;left:50%;top:-24px;width:14px;height:22px;margin-left:-7px;background:#ffc800;border:3px solid #ff8a00;border-radius:50% 50% 50% 50%/70% 70% 30% 30%;animation:flick .3s steps(2) infinite;transform-origin:bottom}
 @keyframes flick{50%{transform:scale(.9,1.1) rotate(4deg)}}
 .candle.off .flame{display:none}
 .candle.off::after{content:"";position:absolute;left:2px;top:-30px;width:6px;height:6px;background:#cfc;opacity:0;animation:smoke 1.4s ease-out}
 @keyframes smoke{0%{opacity:.9}100%{opacity:0;transform:translateY(-40px)}}
-.meter{width:240px;height:18px;border:4px solid var(--berry);background:var(--cream)}
-.meter i{display:block;height:100%;width:0;background:var(--pink)}
+.bar{position:relative;width:min(320px,86vw);height:34px;border:4px solid var(--berry);background:var(--cream);box-shadow:5px 5px 0 var(--berry);cursor:pointer;touch-action:manipulation}
+.zone{position:absolute;top:0;bottom:0;background:var(--pink);border-left:4px solid var(--berry);border-right:4px solid var(--berry)}
+.cursor{position:absolute;top:-8px;bottom:-8px;width:10px;margin-left:-5px;background:var(--berry);border:2px solid var(--cream)}
+.bar.miss{animation:shake .25s steps(4)}@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 /* memories */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:22px;max-width:760px;width:100%}
 .pol{background:var(--cream);border:4px solid var(--berry);box-shadow:5px 5px 0 var(--berry);padding:8px 8px 22px;transform:rotate(var(--r))}
@@ -63,11 +65,11 @@ h1{font-size:clamp(34px,9vw,64px);margin:0;font-weight:600;text-shadow:4px 4px 0
 </section>
 
 <section id="game" class="screen">
-  <div class="box" id="say">Blow on your phone to put out the candles!</div>
+  <div class="box" id="say">Tap when the line is in the pink zone to blow out a candle!</div>
   <div id="stage"><div id="cakeFallback"></div><img id="cake" alt="" hidden></div>
-  <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+  <div class="bar" id="bar"><div class="zone" id="zone"></div><div class="cursor" id="cursor"></div></div>
   <div id="gameChar"></div>
-  <button class="btn" id="tapBlow" hidden>Tap to blow</button>
+  <button class="btn" id="tapBtn">Tap!</button>
 </section>
 
 <section id="memories" class="screen">
@@ -87,7 +89,7 @@ const CONFIG = {
   // Your decorated cake picture (transparent PNG, square works best).
   cake: "cake.png",
   // Where candles sit on the cake, in % of the 300x300 cake area. Add or remove as you like.
-  candles: [[28,38],[44,34],[60,34],[76,38]],
+  candles: [[31,26],[43,26],[57,26],[69,26]],
   // Photos you save from Pinterest into the images/ folder.
   photos: ["images/1.jpg","images/2.jpg","images/3.jpg","images/4.jpg","images/5.jpg","images/6.jpg"]
 };
@@ -136,17 +138,37 @@ CONFIG.photos.forEach((src,i) => {
   d.appendChild(img); $("grid").appendChild(d);
 });
 
-// blowing
-let out = 0, finished = false, stream, raf, heat = 0;
-function snuff(n){
-  while(out < n && out < candles.length) candles[out++].classList.add("off");
-  if(out >= candles.length && !finished) win();
+// timing mini game
+let out = 0, finished = false, raf = 0, pos = 0, dir = 1, speed = 0.9, zoneW = 0.26, zoneX = 0.4, last = 0, playing = false;
+function newZone(){
+  zoneW = Math.max(0.14, 0.26 - out*0.04);
+  zoneX = 0.1 + Math.random()*(0.8 - zoneW);
+  $("zone").style.left = zoneX*100 + "%"; $("zone").style.width = zoneW*100 + "%";
+}
+function loop(t){
+  const dt = Math.min((t - last)/1000, 0.05); last = t;
+  pos += dir*speed*dt;
+  if(pos >= 1){ pos = 1; dir = -1; } else if(pos <= 0){ pos = 0; dir = 1; }
+  $("cursor").style.left = pos*100 + "%";
+  if(playing) raf = requestAnimationFrame(loop);
+}
+function tap(){
+  if(!playing || finished) return;
+  if(pos >= zoneX && pos <= zoneX + zoneW){
+    candles[out++].classList.add("off");
+    speed += 0.25;
+    if(out >= candles.length) return win();
+    $("say").textContent = "Nice! " + (candles.length - out) + " to go ♡";
+    newZone();
+  }else{
+    $("say").textContent = "Oops! Try again ✧";
+    $("bar").classList.remove("miss"); void $("bar").offsetWidth; $("bar").classList.add("miss");
+  }
 }
 function win(){
-  finished = true; cancelAnimationFrame(raf);
-  if(stream) stream.getTracks().forEach(t => t.stop());
+  finished = true; playing = false; cancelAnimationFrame(raf);
   $("say").textContent = "Make a wish… ✧";
-  $("tapBlow").hidden = true;
+  $("tapBtn").hidden = true;
   confetti();
   setTimeout(() => { show("memories"); confetti(); }, 3200);
 }
@@ -161,35 +183,10 @@ function confetti(){
     document.body.appendChild(p); setTimeout(() => p.remove(), 5500);
   }
 }
-async function listen(){
-  try{
-    stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const an = ctx.createAnalyser(); an.fftSize = 512;
-    ctx.createMediaStreamSource(stream).connect(an);
-    const buf = new Uint8Array(an.fftSize);
-    let base = 0, t0 = performance.now();
-    const loop = () => {
-      an.getByteTimeDomainData(buf);
-      let s = 0; for(const v of buf){ const d = (v-128)/128; s += d*d; }
-      const rms = Math.sqrt(s/buf.length);
-      if(performance.now() - t0 < 600) base = Math.max(base, rms);       // measure room noise
-      else{
-        const strong = rms > base + 0.08;                                  // a blow is loud, steady air noise
-        heat = strong ? Math.min(heat + 1, 90) : Math.max(heat - 2, 0);
-        $("meter").style.width = (heat/90*100) + "%";
-        snuff(Math.floor(heat/90 * candles.length * 1.0001));
-      }
-      if(!finished) raf = requestAnimationFrame(loop);
-    };
-    loop();
-  }catch(e){
-    $("say").textContent = "No mic? No problem — tap the button!";
-    $("tapBlow").hidden = false;
-  }
-}
-$("tapBlow").onclick = () => snuff(out + 1);
-$("startBtn").onclick = () => { show("game"); listen(); };
+$("tapBtn").onclick = tap;
+$("bar").onclick = tap;
+document.addEventListener("keydown", e => { if(e.code === "Space" && $("game").classList.contains("on")){ e.preventDefault(); tap(); } });
+$("startBtn").onclick = () => { show("game"); newZone(); playing = true; last = performance.now(); raf = requestAnimationFrame(loop); };
 </script>
 </body>
 </html>
